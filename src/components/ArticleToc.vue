@@ -43,7 +43,7 @@ const setupIntersectionObserver = () => {
 
   observer = new IntersectionObserver(
       (entries) => {
-        let topElement = null
+        let topElement: HTMLElement | null = null
         let minTop = Infinity
 
         entries.forEach(entry => {
