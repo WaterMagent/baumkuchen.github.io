@@ -3,6 +3,7 @@ import App from '../App.vue'
 import HomeView from '../views/HomeView.vue'
 import PostView from '../views/PostView.vue'
 import ArchiveView from '../views/ArchiveView.vue'
+import AboutView from '../views/AboutView.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -27,7 +28,8 @@ const router = createRouter({
                     component: PostView,
                     props: true
                 },
-                { path: 'archive', name: 'archive', component: ArchiveView }
+                { path: 'archive', name: 'archive', component: ArchiveView },
+                { path: 'about', name: 'about', component: AboutView }
             ]
         }
     ]

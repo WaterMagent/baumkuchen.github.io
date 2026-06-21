@@ -2,8 +2,16 @@
   <div class="page-layout">
     <!-- 侧边栏 -->
     <mdui-navigation-rail :value="currentRouteName" class="my-sidebar">
-      <div class="sidebar-header">
-        <mdui-avatar src="https://avatars.githubusercontent.com/u/195563565?v=4" size="large"></mdui-avatar>
+      <div
+          class="sidebar-header"
+          style="cursor: pointer;"
+          @click="$router.push('/about')"
+          title="关于我"
+      >
+        <mdui-avatar
+            src="https://avatars.githubusercontent.com/u/195563565?v=4"
+            size="large"
+        ></mdui-avatar>
       </div>
 
       <mdui-navigation-rail-item
