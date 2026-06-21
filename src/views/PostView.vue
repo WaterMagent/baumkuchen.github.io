@@ -1,5 +1,18 @@
 <template>
-  <!-- ✅ 移除原来的 grid 布局，改为单列 -->
+  <!-- ✅ 顶部返回导航 -->
+  <div class="post-header">
+    <mdui-button
+        variant="text"
+        icon="arrow_back"
+        @click="$router.back()"
+        class="back-btn"
+    >
+      返回
+    </mdui-button>
+
+    <h1 v-if="currentPost" class="post-title">{{ currentPost.title }}</h1>
+  </div>
+
   <article class="post-content-wrapper">
     <component
         :is="currentPost?.component"
@@ -9,7 +22,6 @@
     <div v-else class="loading">加载中...</div>
   </article>
 
-  <!-- ✅ TOC 组件独立放置，不受父容器约束 -->
   <ArticleToc v-if="currentPost" container-selector=".post-content" />
 </template>
 
@@ -26,22 +38,46 @@ const currentPost = computed(() =>
 </script>
 
 <style scoped>
-.post-content-wrapper {
-  max-width: 800px;       /* 文章主体宽度 */
-  margin: 0 auto;         /* 水平居中 */
-  padding: 32px 20px;
+.post-header {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
-  /* ✅ 关键：右侧留出 280px 空间给固定的目录 */
-  padding-right: 280px;
+/* 调整 MDUI 按钮的样式细节 */
+.back-btn {
+  --mdui-button-text-color: var(--text-secondary, #666);
+  font-weight: 500;
+}
+
+.back-btn:hover {
+  --mdui-button-text-color: var(--accent, #3b82f6);
+}
+
+.post-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary, #333);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 文章内容区布局 */
+.post-content-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 20px 32px;
+  padding-right: 280px; /* 给右侧目录留空间 */
   min-width: 0;
 }
 
-.post-content {
-  line-height: 1.8;
-  font-size: 1rem;
-}
+.post-content { line-height: 1.8; font-size: 1rem; }
 
-/* 锚点偏移，避免跳转后标题被顶部导航遮挡 */
 .post-content :deep(h1),
 .post-content :deep(h2),
 .post-content :deep(h3),
@@ -57,10 +93,7 @@ const currentPost = computed(() =>
   color: var(--text-secondary);
 }
 
-/*  小屏幕取消右侧留白 */
 @media (max-width: 1200px) {
-  .post-content-wrapper {
-    padding-right: 20px;
-  }
+  .post-content-wrapper { padding-right: 20px; }
 }
 </style>
