@@ -11,8 +11,8 @@ slug: about
 - Vue 3 + Vite 8
 - TypeScript
 - MDUI 组件库
-- KaTeX 数学公式
+- 剩下的请自行查看源码
 
 ## 联系我
-- GitHub: [WaterMagent](https://github.com/WaterMagent)
+- GitHub: [KagurazakaShion](https://github.com/WaterMagent)
 - Email: <3846359425@qq.com>
