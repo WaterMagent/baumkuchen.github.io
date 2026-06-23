@@ -2,25 +2,14 @@
   "name": "test-blog",
   "version": "1.0.0",
   "private": true,
-  "description": "",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "keywords": [],
-  "author": "Baumkuchen",
-  "license": "ISC",
   "type": "module",
-  "devDependencies": {
-    "@sveltejs/adapter-auto": "^7.0.1",
-    "@sveltejs/kit": "^2.66.0",
-    "@types/markdown-it": "^14.1.2",
-    "svelte": "^5.56.3",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
   },
   "dependencies": {
+    "astro": "^5.0.0",
     "markdown-it": "^14.2.0",
     "mdui": "^2.1.4"
   }

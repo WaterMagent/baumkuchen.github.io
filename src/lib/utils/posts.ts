@@ -9,7 +9,7 @@ export interface PostMeta {
 	banner?: string;
 }
 
-function parseFrontmatter(raw: string): {
+export function parseFrontmatter(raw: string): {
 	attrs: Record<string, string>;
 	body: string;
 } {
@@ -33,16 +33,12 @@ function parseFrontmatter(raw: string): {
 	return { attrs, body };
 }
 
-const mdModules = import.meta.glob('/src/posts/*.md', {
-	eager: true,
-	query: '?raw',
-	import: 'default'
-}) as Record<string, string>;
-
-function parsePosts(): PostMeta[] {
+export function parsePostsFromModules(
+	modules: Record<string, string>
+): PostMeta[] {
 	const result: PostMeta[] = [];
 
-	for (const [path, raw] of Object.entries(mdModules)) {
+	for (const [path, raw] of Object.entries(modules)) {
 		if (!raw || typeof raw !== 'string') continue;
 
 		const { attrs, body } = parseFrontmatter(raw);
@@ -64,11 +60,3 @@ function parsePosts(): PostMeta[] {
 
 	return result;
 }
-
-const allModules = parsePosts();
-
-export const allPosts = allModules
-	.filter((p) => p.type === 'post')
-	.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-export const pages = allModules.filter((p) => p.type === 'page');

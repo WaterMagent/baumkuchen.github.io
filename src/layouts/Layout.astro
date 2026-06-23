@@ -1,0 +1,361 @@
+---
+import '../styles/app.css';
+import Clock from '../lib/components/Clock.astro';
+import { ViewTransitions } from 'astro:transitions';
+
+export interface Props {
+	currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const navItems = [
+	{ name: 'home', label: '主页', icon: 'watch_later--outlined', path: '/' },
+	{ name: 'posts', label: '文章', icon: 'image--outlined', path: '/posts' },
+	{ name: 'archive', label: '归档', icon: 'library_music--outlined', path: '/archive' }
+];
+
+function getActiveValue(path: string): string | undefined {
+	if (path === '/') return 'home';
+	for (const item of navItems) {
+		if (item.name !== 'home' && path.startsWith('/' + item.name)) {
+			return item.name;
+		}
+	}
+	return undefined;
+}
+
+const activeValue = getActiveValue(currentPath);
+---
+
+<!doctype html>
+<html lang="zh-CN" class="mdui-theme-dark" style="background-color:#121212;color-scheme:dark">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link
+			href="https://fonts.googleapis.com/icon?family=Material+Icons"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+			rel="stylesheet"
+		/>
+		<ViewTransitions />
+	</head>
+	<body style="background-color:#121212">
+		<div id="splash">
+			<div class="splash-avatar-wrap">
+				<div class="splash-avatar-wrapper">
+					<img class="splash-avatar" src="https://avatars.githubusercontent.com/u/195563565?v=4" alt="avatar" />
+				</div>
+			</div>
+			<div class="splash-bottom">
+				<div class="splash-path" id="splash-path"></div>
+				<mdui-linear-progress id="splash-progress"></mdui-linear-progress>
+			</div>
+		</div>
+		<div class="page-layout">
+			<mdui-navigation-rail class="my-sidebar" value={activeValue || undefined} transition:persist>
+				<div class="sidebar-header" onclick="__nav('/about')" title="关于我">
+					<mdui-avatar src="https://avatars.githubusercontent.com/u/195563565?v=4" size="large"></mdui-avatar>
+				</div>
+
+				{
+					navItems.map((item) => (
+						<mdui-navigation-rail-item
+							icon={item.icon}
+							value={item.name}
+							onclick={`__nav('${item.path}')`}
+						>
+							{item.label}
+						</mdui-navigation-rail-item>
+					))
+				}
+			</mdui-navigation-rail>
+
+			<div class="clock-corner" transition:persist>
+				<Clock />
+			</div>
+
+			<nav class="bottom-nav" transition:persist>
+				{
+					navItems.map((item) => (
+						<button class="bottom-nav-item" onclick={`__nav('${item.path}')`}>
+							<span class="bottom-nav-label">{item.label}</span>
+						</button>
+					))
+				}
+				<button class="bottom-nav-item" onclick="__nav('/about')">
+					<mdui-avatar class="bottom-nav-avatar" src="https://avatars.githubusercontent.com/u/195563565?v=4" size="x-small"></mdui-avatar>
+				</button>
+			</nav>
+
+			<main class="main-content">
+				<slot />
+			</main>
+		</div>
+	</body>
+</html>
+
+<style is:global>
+	@import 'mdui/mdui.css';
+
+	/* View transitions: disable all — only main-content is named, and its animation is off */
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
+		opacity: 1;
+	}
+	::view-transition-old(main-content) {
+		animation: none;
+		opacity: 1;
+	}
+	::view-transition-new(main-content) {
+		animation: none;
+		opacity: 1;
+	}
+
+	.page-layout {
+		display: flex;
+		min-height: 100vh;
+	}
+	.my-sidebar {
+		width: 80px;
+		background-color: var(--bg-secondary);
+		display: flex;
+		flex-direction: column;
+	}
+	.sidebar-header {
+		height: 64px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 16px;
+		cursor: pointer;
+	}
+	.main-content {
+		flex: 1;
+		background-color: var(--bg-primary);
+		overflow-y: auto;
+		view-transition-name: main-content;
+	}
+	.clock-corner {
+		position: fixed;
+		top: 16px;
+		right: 16px;
+		z-index: 200;
+	}
+
+	.bottom-nav {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.my-sidebar {
+			display: none;
+		}
+		.clock-corner {
+			display: none;
+		}
+		.main-content {
+			padding-bottom: 72px;
+		}
+		.bottom-nav {
+			display: flex;
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: 64px;
+			background-color: var(--bg-secondary);
+			border-top: 1px solid var(--border);
+			z-index: 500;
+			justify-content: space-around;
+			align-items: center;
+			padding: 0 8px;
+		}
+		.bottom-nav-item {
+			background: none;
+			border: none;
+			color: var(--text-secondary);
+			cursor: pointer;
+			padding: 8px 16px;
+			font-family: inherit;
+			font-size: 0.85rem;
+			transition: color 0.2s;
+			border-radius: 8px;
+		}
+		.bottom-nav-item:active {
+			color: var(--accent);
+			background-color: rgba(187, 134, 252, 0.1);
+		}
+		.bottom-nav-avatar {
+			--mdui-avatar-size: 26px;
+			display: block;
+		}
+	}
+
+	#splash {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		background-color: var(--bg-primary);
+		transition: opacity 0.4s ease;
+	}
+	.splash-avatar-wrap {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.splash-avatar-wrapper {
+		position: relative;
+		width: 240px;
+		height: 240px;
+	}
+	.splash-avatar {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+		display: block;
+		animation: splash-pulse 1.5s ease-in-out infinite;
+	}
+	@keyframes splash-pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.7; }
+	}
+	.splash-bottom {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		padding-bottom: 60px;
+		width: 100%;
+	}
+	.splash-path {
+		font-size: 1.2rem;
+		color: var(--text-secondary);
+		font-family: 'Fira Code', 'Consolas', monospace;
+		height: 1.5em;
+	}
+	#splash-progress {
+		width: 80vw;
+		max-width: 600px;
+	}
+</style>
+
+<script>
+	import 'mdui';
+	import 'mdui/components/icon.js';
+	import { navigate } from 'astro:transitions/client';
+
+	window.__nav = navigate;
+
+	// Splash screen — only on external entry
+	const splashPaths = [
+		'/src/layouts/Layout.astro',
+		'/src/lib/components/ArticleToc.astro',
+		'/src/lib/components/Clock.astro',
+		'/src/lib/utils/markdown.ts',
+		'/src/lib/utils/posts.ts',
+		'/src/lib/utils/widget.ts',
+		'/src/pages/404.astro',
+		'/src/pages/about/index.astro',
+		'/src/pages/archive/index.astro',
+		'/src/pages/index.astro',
+		'/src/pages/posts/index.astro',
+		'/src/pages/posts/%5B...slug%5D.astro',
+		'/src/posts/about.md',
+		'/src/posts/ai.md',
+		'/src/posts/ai2.md',
+		'/src/posts/test.md',
+		'/src/posts/test2.md',
+		'/src/styles/app.css',
+	];
+
+	if (!window.__splashDone) {
+		const splash = document.getElementById('splash');
+		const pathEl = document.getElementById('splash-path');
+		if (splash && pathEl) {
+			const duration = 2000;
+			const fileInterval = duration / splashPaths.length;
+			let fileIdx = 0;
+
+			pathEl.textContent = splashPaths[0];
+
+			const tick = () => {
+				fileIdx++;
+				if (fileIdx < splashPaths.length) {
+					pathEl.textContent = splashPaths[fileIdx];
+					setTimeout(tick, fileInterval);
+				} else {
+					splash.style.opacity = '0';
+					setTimeout(() => { splash.style.display = 'none'; }, 400);
+					window.__splashDone = true;
+				}
+			};
+
+			setTimeout(tick, fileInterval);
+		}
+	} else {
+		const splash = document.getElementById('splash');
+		if (splash) splash.style.display = 'none';
+	}
+
+	// Clock — only init once (element is preserved via transition:persist)
+	if (!window.__clockId) {
+		const circumference = 2 * Math.PI * 62;
+		const clockRing = document.getElementById('clock-ring');
+		const clockTime = document.getElementById('clock-time');
+		const clockDate = document.getElementById('clock-date');
+
+		if (clockRing) clockRing.setAttribute('stroke-dasharray', circumference);
+
+		function updateClock() {
+			const now = new Date();
+			const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+			const dashOffset = circumference - (seconds / 60) * circumference;
+			if (clockRing) clockRing.setAttribute('stroke-dashoffset', dashOffset);
+			if (clockTime) clockTime.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+			if (clockDate) clockDate.textContent = now.toLocaleDateString('zh-CN');
+		}
+
+		updateClock();
+		window.__clockId = setInterval(updateClock, 100);
+	}
+
+	function updateActiveNav() {
+		const path = window.location.pathname;
+		const rail = document.querySelector('mdui-navigation-rail');
+		if (!rail) return;
+		if (path === '/') {
+			rail.value = 'home';
+		} else if (path.startsWith('/posts')) {
+			rail.value = 'posts';
+		} else if (path.startsWith('/archive')) {
+			rail.value = 'archive';
+		} else {
+			rail.value = '';
+		}
+	}
+
+	document.addEventListener('astro:page-load', () => {
+		updateActiveNav();
+		if (window.__splashDone) {
+			const splash = document.getElementById('splash');
+			if (splash) splash.style.display = 'none';
+		}
+	});
+	updateActiveNav();
+</script>
