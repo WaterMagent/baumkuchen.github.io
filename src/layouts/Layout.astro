@@ -83,23 +83,28 @@ const activeValue = getActiveValue(currentPath);
 				<Clock />
 			</div>
 
-			<nav class="bottom-nav" transition:persist>
-				{
-					navItems.map((item) => (
-						<button class="bottom-nav-item" onclick={`__nav('${item.path}')`}>
-							<span class="bottom-nav-label">{item.label}</span>
-						</button>
-					))
-				}
-				<button class="bottom-nav-item" onclick="__nav('/about')">
-					<mdui-avatar class="bottom-nav-avatar" src="https://avatars.githubusercontent.com/u/195563565?v=4" size="x-small"></mdui-avatar>
-				</button>
-			</nav>
-
 			<main class="main-content">
 				<slot />
 			</main>
 		</div>
+
+		<mdui-navigation-bar class="bottom-nav" value={activeValue || undefined} label-visibility="labeled" transition:persist>
+			{
+				navItems.map((item) => (
+					<mdui-navigation-bar-item
+						icon={item.icon}
+						value={item.name}
+						onclick={`__nav('${item.path}')`}
+					>
+						{item.label}
+					</mdui-navigation-bar-item>
+				))
+			}
+			<mdui-navigation-bar-item value="about" onclick="__nav('/about')">
+				<mdui-avatar slot="icon" src="https://avatars.githubusercontent.com/u/195563565?v=4" size="x-small"></mdui-avatar>
+				关于
+			</mdui-navigation-bar-item>
+		</mdui-navigation-bar>
 	</body>
 </html>
 
@@ -130,6 +135,7 @@ const activeValue = getActiveValue(currentPath);
 		background-color: var(--bg-secondary);
 		display: flex;
 		flex-direction: column;
+		order: 1;
 	}
 	.sidebar-header {
 		height: 64px;
@@ -148,12 +154,18 @@ const activeValue = getActiveValue(currentPath);
 	.clock-corner {
 		position: fixed;
 		top: 16px;
-		right: 16px;
+		left: 16px;
 		z-index: 200;
 	}
 
 	.bottom-nav {
-		display: none;
+		visibility: hidden;
+		opacity: 0;
+		pointer-events: none;
+		--z-index: 500;
+		--shape-corner: 0;
+		background-color: var(--bg-secondary);
+		transition: opacity 0.2s;
 	}
 
 	@media (max-width: 768px) {
@@ -167,37 +179,9 @@ const activeValue = getActiveValue(currentPath);
 			padding-bottom: 72px;
 		}
 		.bottom-nav {
-			display: flex;
-			position: fixed;
-			bottom: 0;
-			left: 0;
-			right: 0;
-			height: 64px;
-			background-color: var(--bg-secondary);
-			border-top: 1px solid var(--border);
-			z-index: 500;
-			justify-content: space-around;
-			align-items: center;
-			padding: 0 8px;
-		}
-		.bottom-nav-item {
-			background: none;
-			border: none;
-			color: var(--text-secondary);
-			cursor: pointer;
-			padding: 8px 16px;
-			font-family: inherit;
-			font-size: 0.85rem;
-			transition: color 0.2s;
-			border-radius: 8px;
-		}
-		.bottom-nav-item:active {
-			color: var(--accent);
-			background-color: rgba(187, 134, 252, 0.1);
-		}
-		.bottom-nav-avatar {
-			--mdui-avatar-size: 26px;
-			display: block;
+			visibility: visible;
+			opacity: 1;
+			pointer-events: auto;
 		}
 	}
 
@@ -337,17 +321,18 @@ const activeValue = getActiveValue(currentPath);
 
 	function updateActiveNav() {
 		const path = window.location.pathname;
-		const rail = document.querySelector('mdui-navigation-rail');
-		if (!rail) return;
+		let value = '';
 		if (path === '/') {
-			rail.value = 'home';
+			value = 'home';
 		} else if (path.startsWith('/posts')) {
-			rail.value = 'posts';
+			value = 'posts';
 		} else if (path.startsWith('/archive')) {
-			rail.value = 'archive';
-		} else {
-			rail.value = '';
+			value = 'archive';
 		}
+		const rail = document.querySelector('mdui-navigation-rail');
+		if (rail) rail.value = value;
+		const navBar = document.querySelector('mdui-navigation-bar');
+		if (navBar) navBar.value = value;
 	}
 
 	document.addEventListener('astro:page-load', () => {

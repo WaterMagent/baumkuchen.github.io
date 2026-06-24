@@ -80,10 +80,21 @@ const allPosts = allModules
 			grid.innerHTML = '<p class="no-results">没有找到匹配的文章</p>';
 		} else {
 			paginated.forEach((post) => {
+				const cardWrap = document.createElement('div');
+				cardWrap.className = 'post-card-wrap';
+
 				const cardEl = document.createElement('mdui-card');
-				cardEl.variant = 'elevated';
+				cardEl.variant = 'outlined';
 				cardEl.className = 'post-card';
-				cardEl.style.cssText = 'width:100%;display:block;cursor:pointer;transition:transform 0.2s';
+				cardEl.style.cssText = 'width:100%;display:block;transition:transform 0.2s,border-color 0.2s';
+				cardWrap.addEventListener('mouseenter', () => {
+					cardEl.style.transform = 'translateX(8px)';
+					cardEl.style.borderColor = 'var(--accent)';
+				});
+				cardWrap.addEventListener('mouseleave', () => {
+					cardEl.style.transform = '';
+					cardEl.style.borderColor = '';
+				});
 
 				let html = '';
 				if (post.banner) {
@@ -101,11 +112,12 @@ const allPosts = allModules
 
 				cardEl.innerHTML = html;
 				const slug = post.slug;
-				cardEl.addEventListener('mouseenter', () => prefetchPage(`/posts/${slug}`), { once: true });
-				cardEl.addEventListener('click', () => {
+				cardWrap.addEventListener('mouseenter', () => prefetchPage(`/posts/${slug}`), { once: true });
+				cardWrap.addEventListener('click', () => {
 					navigate(`/posts/${slug}`);
 				});
-				grid.appendChild(cardEl);
+				cardWrap.appendChild(cardEl);
+				grid.appendChild(cardWrap);
 			});
 		}
 
@@ -186,15 +198,17 @@ const allPosts = allModules
 		margin-bottom: 30px;
 	}
 
+	.post-card-wrap {
+		border-radius: 12px;
+		overflow: hidden;
+		cursor: pointer;
+	}
+
 	.post-card {
 		width: 100%;
 		display: block;
-		cursor: pointer;
-		transition: transform 0.2s;
 	}
-	.post-card:hover {
-		transform: translateY(-4px);
-	}
+
 
 	.card-content {
 		padding: 20px;

@@ -143,3 +143,10 @@ body {
 		height: 140px !important;
 	}
 }
+
+/* Hide MDUI navigation-bar before its custom element is defined */
+mdui-navigation-bar:not(:defined) {
+	visibility: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
