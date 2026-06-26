@@ -57,3 +57,15 @@
 {"message":"src/pages/guestbook.astro","label":"watch","level":"info"}
 {"message":"[200] /guestbook 11ms","label":null,"level":"info"}
 {"message":"[200] /guestbook 2ms","label":null,"level":"info"}
+{"message":"[200] /guestbook 2ms","label":null,"level":"info"}
+{"message":"Configuration file updated. Restarting...","label":null,"level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"build/about/index.html","label":"watch","level":"info"}
+{"message":"build/blog/index.html","label":"watch","level":"info"}
+{"message":"build/building-with-astro/index.html","label":"watch","level":"info"}
+{"message":"build/guestbook/index.html","label":"watch","level":"info"}
+{"message":"build/index.html","label":"watch","level":"info"}
+{"message":"build/hello-world/index.html","label":"watch","level":"info"}
