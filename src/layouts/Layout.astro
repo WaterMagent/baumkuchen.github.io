@@ -13,6 +13,7 @@ const currentPath = Astro.url.pathname;
 const navItems = [
   { href: '/', label: '首页', icon: '⌂' },
   { href: '/blog', label: '博客', icon: '✎' },
+  { href: '/music', label: '音乐', icon: '♫' },
   { href: '/about', label: '关于', icon: '◎' },
 ];
 ---
@@ -30,17 +31,20 @@ const navItems = [
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <div class="scanlines" aria-hidden="true"></div>
     <StartupAnimation />
     <div class="page-layout">
       <nav class="sidebar">
-        <a href="/" class="sidebar-avatar-link">
-          <img
-            class="sidebar-avatar"
-            src="https://avatars.githubusercontent.com/u/195563565?v=4"
-            alt="Baumkuchen"
-            width="40"
-            height="40"
-          />
+        <a href="/about" class="sidebar-avatar-link" aria-label="关于">
+          <div class="sidebar-avatar-ring">
+            <img
+              class="sidebar-avatar"
+              src="https://avatars.githubusercontent.com/u/195563565?v=4"
+              alt="Baumkuchen"
+              width="40"
+              height="40"
+            />
+          </div>
         </a>
         <div class="sidebar-nav">
           {navItems.map((item) => (
@@ -54,6 +58,7 @@ const navItems = [
             >
               <span class="sidebar-icon">{item.icon}</span>
               <span class="sidebar-label">{item.label}</span>
+              <span class="sidebar-indicator"></span>
             </a>
           ))}
         </div>
@@ -67,6 +72,92 @@ const navItems = [
     <footer class="footer">
       <p>&copy; {new Date().getFullYear()} Baumkuchen. 保留所有权利。</p>
     </footer>
+
+    <div class="global-player" id="global-player">
+      <audio id="global-audio" preload="metadata"></audio>
+      <button class="gp-play" id="gp-play">▸</button>
+      <div class="gp-info">
+        <div class="gp-name" id="gp-name"></div>
+        <div class="gp-track" id="gp-track">
+          <div class="gp-progress" id="gp-progress"></div>
+        </div>
+      </div>
+      <span class="gp-time" id="gp-time">0:00</span>
+    </div>
+
+    <script>
+      (() => {
+        var audio = document.getElementById('global-audio');
+        var player = document.getElementById('global-player');
+        var playBtn = document.getElementById('gp-play');
+        var nameEl = document.getElementById('gp-name');
+        var track = document.getElementById('gp-track');
+        var progress = document.getElementById('gp-progress');
+        var timeEl = document.getElementById('gp-time');
+
+        function fmt(sec) {
+          sec = Math.floor(sec || 0);
+          return Math.floor(sec / 60) + ':' + (sec % 60 < 10 ? '0' : '') + (sec % 60);
+        }
+
+        // Restore session
+        var saved = sessionStorage.getItem('gp');
+        if (saved) {
+          try {
+            var state = JSON.parse(saved);
+            if (state.name) {
+              player.classList.add('active');
+              nameEl.textContent = state.name;
+              audio.src = state.url;
+              if (state.time) audio.currentTime = state.time;
+              if (state.playing) { audio.play().catch(function(){}); playBtn.textContent = '❚❚'; }
+            }
+          } catch(e) {}
+        }
+
+        // Save state before unload
+        window.addEventListener('beforeunload', function() { saveState(); });
+
+        playBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (audio.paused) { audio.play().catch(function(){}); playBtn.textContent = '❚❚'; }
+          else { audio.pause(); playBtn.textContent = '▸'; }
+        });
+
+        audio.addEventListener('timeupdate', function() {
+          if (audio.duration) {
+            progress.style.width = (audio.currentTime / audio.duration) * 100 + '%';
+            timeEl.textContent = fmt(audio.currentTime);
+            saveState();
+          }
+        });
+
+        function saveState() {
+          sessionStorage.setItem('gp', JSON.stringify({
+            name: nameEl.textContent,
+            url: audio.src,
+            time: audio.currentTime,
+            playing: !audio.paused
+          }));
+        }
+
+        audio.addEventListener('loadedmetadata', function() {
+          progress.style.width = '0%';
+        });
+
+        audio.addEventListener('ended', function() {
+          playBtn.textContent = '▸';
+          progress.style.width = '0%';
+          timeEl.textContent = '0:00';
+        });
+
+        track.addEventListener('click', function(e) {
+          var rect = track.getBoundingClientRect();
+          var pct = (e.clientX - rect.left) / rect.width;
+          if (audio.duration) audio.currentTime = pct * audio.duration;
+        });
+      })();
+    </script>
   </body>
 </html>
 
@@ -86,8 +177,10 @@ const navItems = [
     flex-direction: column;
     align-items: center;
     padding: 1rem 0;
-    background: var(--bg-card);
+    background: rgba(10, 10, 20, 0.85);
     border-right: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 100;
     gap: 0.5rem;
   }
@@ -98,6 +191,31 @@ const navItems = [
     justify-content: center;
     margin-bottom: 1rem;
     text-decoration: none !important;
+    position: relative;
+  }
+
+  .sidebar-avatar-ring {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-avatar-ring::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-cyan), var(--accent-secondary));
+    opacity: 0.5;
+    animation: ring-spin 3s linear infinite;
+  }
+
+  @keyframes ring-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   .sidebar-avatar {
@@ -105,13 +223,14 @@ const navItems = [
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--border);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    border: 2px solid rgba(10, 10, 20, 0.9);
+    position: relative;
+    z-index: 1;
+    transition: box-shadow 0.2s;
   }
 
-  .sidebar-avatar:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 16px var(--accent-glow);
+  .sidebar-avatar-link:hover .sidebar-avatar {
+    box-shadow: 0 0 20px var(--accent-glow);
   }
 
   .sidebar-nav {
@@ -120,6 +239,7 @@ const navItems = [
     gap: 0.25rem;
     width: 100%;
     padding: 0 0.5rem;
+    position: relative;
   }
 
   .sidebar-item {
@@ -133,6 +253,7 @@ const navItems = [
     color: var(--text-dim) !important;
     transition: all 0.2s;
     cursor: pointer;
+    position: relative;
   }
 
   .sidebar-item:hover {
@@ -145,9 +266,42 @@ const navItems = [
     color: var(--accent) !important;
   }
 
+  .sidebar-indicator {
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    border-radius: 0 2px 2px 0;
+    background: linear-gradient(180deg, var(--accent), var(--accent-cyan));
+    transition: height 0.2s;
+  }
+
+  .sidebar-item.active .sidebar-indicator,
+  .sidebar-item:hover .sidebar-indicator {
+    height: 20px;
+  }
+
   .sidebar-icon {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     line-height: 1;
+    position: relative;
+  }
+
+  .sidebar-icon::after {
+    display: none;
+  }
+
+  .sidebar-item.active .sidebar-icon::after {
+    display: block;
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 4px;
+    background: var(--accent-glow);
+    filter: blur(8px);
+    z-index: -1;
   }
 
   .sidebar-label {
@@ -176,6 +330,19 @@ const navItems = [
     justify-content: center;
     color: var(--text-dim);
     font-size: 0.85rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    position: relative;
+  }
+
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
   }
 
   @media (max-width: 600px) {
@@ -194,5 +361,65 @@ const navItems = [
     .footer {
       margin-left: 72px;
     }
+  }
+
+  /* ── Global pill player ── */
+  .global-player {
+    display: none;
+    position: fixed;
+    left: 84px;
+    bottom: 20px;
+    z-index: 200;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem 0.4rem 0.5rem;
+    background: rgba(8, 8, 16, 0.88);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    min-width: 180px;
+    max-width: 320px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  }
+  .global-player.active { display: flex; }
+
+  .gp-play {
+    width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent);
+    font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .gp-play:hover { background: rgba(108, 99, 255, 0.15); box-shadow: 0 0 12px var(--accent-glow); }
+
+  .gp-info {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  .gp-name {
+    font-size: 0.75rem; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .gp-track {
+    height: 3px; background: var(--border); border-radius: 2px; cursor: pointer; position: relative;
+  }
+  .gp-progress {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-cyan));
+    border-radius: 2px; transition: width 0.1s linear;
+    box-shadow: 0 0 4px rgba(0, 240, 255, 0.3);
+  }
+  .gp-time {
+    font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-dim); flex-shrink: 0; min-width: 36px; text-align: right;
+  }
+
+  #global-audio { display: none; }
+
+  @media (max-width: 600px) {
+    .global-player {
+      left: 64px;
+      bottom: 12px;
+      max-width: calc(100vw - 80px);
+      padding: 0.3rem 0.5rem 0.3rem 0.4rem;
+    }
+    .gp-name { font-size: 0.7rem; }
+    .gp-play { width: 24px; height: 24px; }
   }
 </style>

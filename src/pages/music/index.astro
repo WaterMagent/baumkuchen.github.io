@@ -1,0 +1,280 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const playlistId = 14292629226;
+
+const res = await fetch(`https://music.163.com/api/v3/playlist/detail?id=${playlistId}`);
+const data = await res.json();
+const playlist = data.playlist;
+const trackIds: number[] = (playlist.trackIds || []).map((t: any) => t.id);
+const coverUrl = (playlist.coverImgUrl || '').replace('http://', 'https://');
+const totalTracks = playlist.trackCount || trackIds.length;
+
+// Fetch all song details at build time
+const BATCH_SIZE = 100;
+const allSongs: Array<{ id: number; name: string; artists: string; album: string; cover: string; duration: number }> = [];
+
+for (let i = 0; i < trackIds.length; i += BATCH_SIZE) {
+  const batch = trackIds.slice(i, i + BATCH_SIZE);
+  try {
+    const r = await fetch(`https://music.163.com/api/song/detail?ids=[${batch.join(',')}]`);
+    const d = await r.json();
+    if (d.songs) {
+      for (const s of d.songs) {
+        allSongs.push({
+          id: s.id,
+          name: s.name,
+          artists: (s.artists || []).map((a: any) => a.name).join(', '),
+          album: s.album?.name || '',
+          cover: ((s.album?.picUrl || '').replace('http://', 'https://')),
+          duration: s.duration || 0,
+        });
+      }
+    }
+  } catch { /* skip failed batch */ }
+}
+
+const pageSize = 100;
+const totalPages = Math.ceil(allSongs.length / pageSize);
+
+function fmt(ms: number) {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+---
+
+<Layout title="音乐推荐" description="Baumkuchen 的音乐推荐">
+  <section class="music-page fade-in">
+    <div class="music-header fade-in stagger-1">
+      <div class="music-cover-wrap">
+        <img class="music-cover" src={coverUrl} alt={playlist.name} width="120" height="120" />
+        <span class="music-cover-ring"></span>
+      </div>
+      <div class="music-info">
+        <h1 class="music-title">
+          <span class="music-title-accent"></span>
+          音乐推荐
+        </h1>
+        <p class="music-meta">
+          <span class="music-meta-tag">{allSongs.length} 首歌曲</span>
+          <span class="music-meta-tag">{playlist.playCount} 次播放</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="music-controls fade-in stagger-2">
+      <div class="music-search">
+        <span class="search-icon">&gt;</span>
+        <input type="text" id="music-search" class="search-input" placeholder="搜索歌曲..." />
+      </div>
+      <div class="music-stats">
+        <span id="visible-count">{pageSize > allSongs.length ? allSongs.length : pageSize}</span> / {allSongs.length}
+      </div>
+    </div>
+
+    <div class="music-list" id="music-list">
+      {allSongs.map((s, i) => (
+        <div class="music-item" data-id={s.id} data-page={Math.floor(i / pageSize) + 1}>
+          <img class="item-cover" src={s.cover + '?param=40y40'} alt="" width="40" height="40" loading="lazy" />
+          <div class="item-info">
+            <div class="item-name">{s.name}</div>
+            <div class="item-artist">{s.artists} — {s.album}</div>
+          </div>
+          <span class="item-duration">{s.duration ? fmt(s.duration) : ''}</span>
+          <button class="item-play" title="播放">▸</button>
+        </div>
+      ))}
+    </div>
+
+    <div class="music-pagination fade-in stagger-3">
+      <button class="page-btn" id="page-prev" disabled>‹ 上一页</button>
+      <div class="page-info" id="page-info">第 1 / {totalPages} 页</div>
+      <button class="page-btn" id="page-next">{totalPages > 1 ? '下一页 ›' : ''}</button>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  (() => {
+    const pageSize = 100;
+    const allItems = Array.from(document.querySelectorAll('.music-item'));
+    let currentPage = 1;
+
+    const listEl = document.getElementById('music-list');
+    const searchBox = document.getElementById('music-search');
+    const visibleCount = document.getElementById('visible-count');
+    const pagePrev = document.getElementById('page-prev');
+    const pageNext = document.getElementById('page-next');
+    const pageInfo = document.getElementById('page-info');
+    let ga, gp, gplay, gname;
+
+    function getFiltered() {
+      const q = (searchBox.value || '').toLowerCase().trim();
+      if (!q) return allItems;
+      return allItems.filter(el => {
+        const name = (el.querySelector('.item-name')?.textContent || '').toLowerCase();
+        const artist = (el.querySelector('.item-artist')?.textContent || '').toLowerCase();
+        return name.indexOf(q) !== -1 || artist.indexOf(q) !== -1;
+      });
+    }
+
+    function renderPage() {
+      const filtered = getFiltered();
+      const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      if (currentPage > pages) currentPage = pages;
+      if (currentPage < 1) currentPage = 1;
+
+      const start = (currentPage - 1) * pageSize;
+
+      allItems.forEach(el => el.style.display = 'none');
+      filtered.slice(start, start + pageSize).forEach(el => el.style.display = 'flex');
+
+      visibleCount.textContent = String(Math.min(currentPage * pageSize, filtered.length));
+      pagePrev.disabled = currentPage <= 1;
+      pageNext.disabled = currentPage >= pages;
+      pageInfo.textContent = '第 ' + currentPage + ' / ' + pages + ' 页';
+      pageNext.textContent = currentPage >= pages ? '' : '下一页 ›';
+    }
+
+    function playSong(el) {
+      var id = el.getAttribute('data-id');
+      var name = el.querySelector('.item-name')?.textContent || '';
+      ga = ga || document.getElementById('global-audio');
+      gp = gp || document.getElementById('global-player');
+      gplay = gplay || document.getElementById('gp-play');
+      gname = gname || document.getElementById('gp-name');
+      ga.src = 'https://music.163.com/song/media/outer/url?id=' + id + '.mp3';
+      ga.play().catch(function(){});
+      gp.classList.add('active');
+      gplay.textContent = '❚❚';
+      gname.textContent = name;
+      sessionStorage.setItem('gp', JSON.stringify({ name: name, url: ga.src, time: 0, playing: true }));
+      allItems.forEach(function(e) { e.classList.remove('playing'); });
+      el.classList.add('playing');
+    }
+
+    listEl.addEventListener('click', function(e) {
+      var item = e.target.closest('.music-item');
+      if (item) playSong(item);
+    });
+
+    var timer;
+    searchBox.addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        currentPage = 1;
+        renderPage();
+      }, 150);
+    });
+
+    pagePrev.addEventListener('click', function() {
+      if (currentPage > 1) { currentPage--; renderPage(); window.scrollTo(0, listEl.offsetTop - 80); }
+    });
+    pageNext.addEventListener('click', function() {
+      var pages = Math.max(1, Math.ceil(getFiltered().length / pageSize));
+      if (currentPage < pages) { currentPage++; renderPage(); window.scrollTo(0, listEl.offsetTop - 80); }
+    });
+
+    renderPage();
+  })();
+</script>
+
+<style is:global>
+  .music-page { padding: 2rem 0; max-width: 640px; margin: 0 auto; }
+  .music-header { display: flex; gap: 1.25rem; align-items: center; margin-bottom: 2rem; }
+
+  .music-cover-wrap {
+    position: relative; width: 120px; height: 120px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .music-cover {
+    width: 120px; height: 120px; border-radius: 12px; object-fit: cover;
+    position: relative; z-index: 1; border: 1px solid var(--border);
+  }
+  .music-cover-ring {
+    position: absolute; inset: -3px; border-radius: 14px; padding: 2px;
+    background: conic-gradient(var(--accent), var(--accent-cyan), transparent 50%, var(--accent-secondary), var(--accent));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude; animation: music-ring-spin 4s linear infinite;
+  }
+  @keyframes music-ring-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .music-info { flex: 1; min-width: 0; }
+  .music-title {
+    font-size: 1.8rem; font-weight: 700; color: var(--text-bright);
+    letter-spacing: -0.02em; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.6rem;
+  }
+  .music-title-accent {
+    display: inline-block; width: 3px; height: 1.2em;
+    background: linear-gradient(180deg, var(--accent), var(--accent-cyan)); border-radius: 2px;
+  }
+  .music-desc { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+  .music-desc strong { color: var(--accent-cyan); }
+  .music-meta { display: flex; gap: 0.5rem; }
+  .music-meta-tag {
+    display: inline-block; font-size: 0.7rem; font-family: var(--font-mono);
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(108, 99, 255, 0.1); border: 1px solid rgba(108, 99, 255, 0.2); color: var(--accent);
+  }
+
+  .music-controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .music-search { flex: 1; position: relative; display: flex; align-items: center; }
+  .search-icon {
+    position: absolute; left: 10px; color: var(--accent-cyan);
+    font-family: var(--font-mono); font-size: 0.85rem; opacity: 0.5; pointer-events: none;
+  }
+  .search-input {
+    width: 100%; padding: 0.5rem 0.75rem 0.5rem 1.8rem;
+    background: rgba(16, 16, 28, 0.6); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.85rem; font-family: var(--font-sans);
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+  .music-stats { font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono); white-space: nowrap; }
+
+  .music-list { display: flex; flex-direction: column; gap: 2px; }
+  .music-item {
+    display: none; align-items: center; gap: 0.75rem;
+    padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+  }
+  .music-item:hover { background: var(--bg-hover); }
+  .music-item.playing {
+    background: rgba(108, 99, 255, 0.1); border-left: 2px solid var(--accent-cyan);
+    border-radius: 8px 0 0 8px;
+  }
+  .item-cover { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name { font-size: 0.9rem; color: var(--text-bright); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-artist { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-duration { font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono); }
+  .item-play {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+    background: transparent; color: var(--accent); font-size: 0.7rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0;
+  }
+  .music-item:hover .item-play { border-color: var(--accent); background: rgba(108, 99, 255, 0.1); }
+  .music-item.playing .item-play { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+  .music-pagination {
+    display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1.5rem 0 0.5rem;
+  }
+  .page-btn {
+    padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px;
+    background: rgba(16, 16, 28, 0.6); color: var(--text); font-size: 0.82rem;
+    font-family: var(--font-sans); cursor: pointer; transition: all 0.2s;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); user-select: none;
+  }
+  .page-btn:hover:not(:disabled) {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(108, 99, 255, 0.08); box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .page-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+  .page-info {
+    font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-mono);
+    min-width: 100px; text-align: center; letter-spacing: 0.02em;
+  }
+
+  .music-empty { text-align: center; padding: 3rem 0; color: var(--text-dim); font-size: 0.9rem; }
+</style>

@@ -24,6 +24,7 @@ const { frontmatter } = Astro.props;
     <header class="post-header">
       <h1 class="post-title">{frontmatter.title}</h1>
       <time class="post-date" datetime={frontmatter.date}>
+        <span class="date-icon">&lt;/&gt;</span>
         {new Date(frontmatter.date).toLocaleDateString('zh-CN', {
           year: 'numeric',
           month: 'long',
@@ -47,6 +48,18 @@ const { frontmatter } = Astro.props;
 
   .post-banner {
     margin-bottom: 2rem;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .post-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    pointer-events: none;
   }
 
   .post-banner img {
@@ -55,13 +68,24 @@ const { frontmatter } = Astro.props;
     height: auto;
     aspect-ratio: 3 / 1;
     object-fit: cover;
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
   }
 
   .post-header {
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .post-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-cyan), transparent);
   }
 
   .blog-post .post-title {
@@ -77,5 +101,14 @@ const { frontmatter } = Astro.props;
     font-size: 0.85rem;
     font-family: var(--font-mono);
     color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .date-icon {
+    color: var(--accent-cyan);
+    opacity: 0.6;
+    font-size: 1rem;
   }
 </style>

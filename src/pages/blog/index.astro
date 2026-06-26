@@ -26,12 +26,16 @@ const sortedPosts = posts.sort(
 
 <Layout title="博客" description="Baumkuchen 的博客文章">
   <section class="blog-page fade-in">
-    <h1 class="blog-page-title">博客</h1>
+    <h1 class="blog-page-title">
+      <span class="page-title-accent"></span>
+      博客
+    </h1>
     <p class="blog-page-desc">关于代码、技术，以及介于两者之间的一切。</p>
 
     <div class="blog-list">
       {sortedPosts.map((post, i) => (
         <a href={post.url} class="post-card fade-in" style={`animation-delay: ${i * 0.1}s`}>
+          <div class="card-glow"></div>
           {post.frontmatter.banner && (
             <div class="card-banner">
               <img src={post.frontmatter.banner} alt="" width="240" height="160" />
@@ -39,15 +43,19 @@ const sortedPosts = posts.sort(
           )}
           <div class="card-body">
             <div class="post-meta">
-              {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              <span class="meta-tag">
+                {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
             </div>
             <h2 class="post-title">{post.frontmatter.title}</h2>
             <p class="post-desc">{post.frontmatter.description}</p>
-            <span class="post-read">阅读更多 →</span>
+            <span class="post-read">
+              阅读更多
+            </span>
           </div>
         </a>
       ))}
@@ -66,6 +74,17 @@ const sortedPosts = posts.sort(
     color: var(--text-bright);
     margin-bottom: 0.5rem;
     letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .page-title-accent {
+    display: inline-block;
+    width: 4px;
+    height: 1.3em;
+    background: linear-gradient(180deg, var(--accent), var(--accent-cyan));
+    border-radius: 2px;
   }
 
   .blog-page-desc {
@@ -82,19 +101,35 @@ const sortedPosts = posts.sort(
 
   .blog-list .post-card {
     display: flex;
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: all 0.2s;
+    transition: all 0.3s;
     text-decoration: none !important;
     color: inherit !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .blog-list .post-card:hover {
-    border-color: var(--accent);
-    background: var(--bg-hover);
+    border-color: rgba(108, 99, 255, 0.3);
+    background: rgba(18, 18, 34, 0.85);
     transform: translateX(4px);
+  }
+
+  .card-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), rgba(108, 99, 255, 0.06), transparent 60%);
+  }
+
+  .post-card:hover .card-glow {
+    opacity: 1;
   }
 
   .card-banner {
@@ -102,7 +137,15 @@ const sortedPosts = posts.sort(
     min-height: 160px;
     flex-shrink: 0;
     overflow: hidden;
-    border-radius: var(--radius) 0 0 var(--radius);
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    position: relative;
+  }
+
+  .card-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(10, 10, 20, 0.3));
   }
 
   .card-banner img {
@@ -110,6 +153,11 @@ const sortedPosts = posts.sort(
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .post-card:hover .card-banner img {
+    transform: scale(1.05);
   }
 
   .card-body {
@@ -129,6 +177,14 @@ const sortedPosts = posts.sort(
     margin-bottom: 0.3rem;
   }
 
+  .meta-tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    background: rgba(108, 99, 255, 0.1);
+    border: 1px solid rgba(108, 99, 255, 0.2);
+  }
+
   .blog-list .post-title {
     font-size: 1.15rem;
     font-weight: 600;
@@ -146,5 +202,18 @@ const sortedPosts = posts.sort(
     font-size: 0.85rem;
     color: var(--accent);
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .blog-list .post-read::after {
+    content: '▸';
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+  }
+
+  .blog-list .post-card:hover .post-read::after {
+    transform: translateX(4px);
   }
 </style>

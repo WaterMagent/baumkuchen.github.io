@@ -4,9 +4,20 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="页面未找到">
   <section class="not-found fade-in">
-    <h1 class="nf-code">404</h1>
+    <div class="nf-code-wrapper">
+      <span class="nf-code-bracket">&lt;</span>
+      <h1 class="nf-code">
+        <span class="nf-digit" style="animation-delay: 0s">4</span>
+        <span class="nf-digit" style="animation-delay: 0.1s">0</span>
+        <span class="nf-digit" style="animation-delay: 0.2s">4</span>
+      </h1>
+      <span class="nf-code-bracket">/&gt;</span>
+    </div>
     <p class="nf-desc">页面不存在，它可能已经被移除了。</p>
-    <a href="/" class="nf-link">回到首页</a>
+    <a href="/" class="nf-link">
+      <span class="nf-link-arrow">&larr;</span>
+      回到首页
+    </a>
   </section>
 </Layout>
 
@@ -20,16 +31,42 @@ import Layout from '../layouts/Layout.astro';
     text-align: center;
   }
 
+  .nf-code-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .nf-code-bracket {
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--accent-cyan);
+    opacity: 0.3;
+    font-family: var(--font-mono);
+  }
+
   .nf-code {
     font-size: 6rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    line-height: 1;
+    letter-spacing: -0.05em;
+    display: flex;
+    gap: 0.2rem;
+    position: relative;
+  }
+
+  .nf-digit {
+    background: linear-gradient(180deg, var(--accent), var(--accent-cyan));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    margin-bottom: 1rem;
+    animation: digit-float 2s ease-in-out infinite;
+  }
+
+  @keyframes digit-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
   }
 
   .nf-desc {
@@ -41,19 +78,31 @@ import Layout from '../layouts/Layout.astro';
   .nf-link {
     display: inline-flex;
     align-items: center;
+    gap: 0.4rem;
     padding: 0.75rem 1.5rem;
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent), #7b73ff);
     color: #fff !important;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.2s;
     text-decoration: none !important;
+    box-shadow: 0 0 20px var(--accent-glow);
+    position: relative;
+    overflow: hidden;
   }
 
   .nf-link:hover {
-    background: #7b73ff;
-    box-shadow: 0 0 30px var(--accent-glow);
+    box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(108, 99, 255, 0.1);
     transform: translateY(-2px);
+  }
+
+  .nf-link-arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .nf-link:hover .nf-link-arrow {
+    transform: translateX(-3px);
   }
 </style>
