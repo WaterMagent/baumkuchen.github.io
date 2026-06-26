@@ -177,10 +177,14 @@ import Layout from '../layouts/Layout.astro';
     loginBtn.disabled = true;
     loginBtn.textContent = '请求中...';
     try {
-      const res = await fetch('https://github.com/login/device/code', {
+      const res = await fetch('/.netlify/functions/oauth-proxy', {
         method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: new URLSearchParams({ client_id: clientId, scope: 'public_repo' })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'device/code',
+          client_id: clientId,
+          scope: 'public_repo'
+        })
       });
       const data = await res.json();
       if (!data.device_code) {
@@ -208,10 +212,11 @@ import Layout from '../layouts/Layout.astro';
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(async () => {
       try {
-        const res = await fetch('https://github.com/login/oauth/access_token', {
+        const res = await fetch('/.netlify/functions/oauth-proxy', {
           method: 'POST',
-          headers: { 'Accept': 'application/json' },
-          body: new URLSearchParams({
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: 'oauth/access_token',
             client_id: clientId,
             device_code: deviceCode,
             grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
