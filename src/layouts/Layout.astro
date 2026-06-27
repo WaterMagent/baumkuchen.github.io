@@ -262,16 +262,15 @@ const navItems = [
         function parseLrc(raw) {
           var lines = raw.split('\n');
           var out = [];
-          var tagRe = /^\[(\d+):(\d+(?:[.,]\d+)?)\](.*)/;
-          var metaRe = /^(作词|作曲|编曲|制作人|混音|母带|录音|和声|吉他|贝斯|键盘|钢琴|鼓|弦乐|歌词|Lyrics|Composer|Arranger|Producer|Mix|Master)[\s:：]/i;
+          // Supports [mm:ss.xx], [mm:ss,xx], [mm:ss:xx], and [mm:ss]
+          var tagRe = /^\[(\d+):(\d+)(?:[.,:](\d+))?\](.*)/;
           for (var i = 0; i < lines.length; i++) {
             var m = lines[i].match(tagRe);
             if (!m) continue;
             var mins = parseInt(m[1], 10);
-            var secs = parseFloat(m[2].replace(',', '.'));
-            var text = m[3].trim();
+            var secs = parseInt(m[2], 10) + (m[3] ? parseInt(m[3], 10) / 100 : 0);
+            var text = m[4].trim();
             if (!text) continue;
-            if (metaRe.test(text)) continue;
             out.push({ time: mins * 60 + secs, text: text });
           }
           out.sort(function(a, b) { return a.time - b.time; });
@@ -330,17 +329,20 @@ const navItems = [
           fetch(url)
             .then(function(r) { return r.json(); })
             .then(function(d) {
-              if (d.code !== 200) { hideLyrics(); return; }
-              if (d.pureMusic) { hideLyrics(); return; }
+              if (d.code !== 200) { console.log('[lrc] code != 200:', d.code); hideLyrics(); return; }
+              if (d.pureMusic) { console.log('[lrc] pureMusic'); hideLyrics(); return; }
 
               var lrc = (d.lrc && d.lrc.lyric) || '';
               var tlrc = (d.tlyric && d.tlyric.lyric) || '';
-              var cleaned = lrc.replace(/纯音乐[，,]?\s*请欣赏/i, '').trim();
-              if (cleaned === lrc) cleaned = lrc.trim();
+              console.log('[lrc] id=' + id + ' lrc=' + (lrc ? lrc.length + 'chars' : 'EMPTY') + ' tlrc=' + (tlrc ? tlrc.length + 'chars' : 'EMPTY'));
+
+              var cleaned = lrc.replace(/纯音乐[，,]?\s*请欣赏/i, '').replace(/\r/g, '').trim();
+              if (cleaned === lrc) cleaned = lrc.replace(/\r/g, '').trim();
 
               var parsed = cleaned ? parseLrc(cleaned) : [];
-              var tParsed = tlrc ? parseLrc(tlrc) : [];
-              if (!parsed.length && !tParsed.length) { hideLyrics(); return; }
+              var tParsed = tlrc ? parseLrc(tlrc.replace(/\r/g, '')) : [];
+              console.log('[lrc] parsed=' + parsed.length + 'lines tParsed=' + tParsed.length + 'lines');
+              if (!parsed.length && !tParsed.length) { console.log('[lrc] no lines after parse'); hideLyrics(); return; }
 
               var html = buildLrcHtml(parsed, 'lrc-orig');
               if (tParsed.length) {
@@ -357,7 +359,7 @@ const navItems = [
               audio.addEventListener('seeked', syncLyrics);
               syncLyrics();
             })
-            .catch(function() { hideLyrics(); });
+            .catch(function(e) { console.log('[lrc] fetch error:', e); hideLyrics(); });
         }
 
         // Watch for new song playback
