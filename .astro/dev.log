@@ -91,3 +91,24 @@
 {"message":"[200] /blog 3ms","label":null,"level":"info"}
 {"message":"[200] / 4ms","label":null,"level":"info"}
 {"message":"[200] / 4ms","label":null,"level":"info"}
+{"message":"[200] / 3ms","label":null,"level":"info"}
+{"message":"src/layouts/Layout.astro","label":"watch","level":"info"}
+{"message":"build/404.html","label":"watch","level":"info"}
+{"message":"build/about/index.html","label":"watch","level":"info"}
+{"message":"build/blog/index.html","label":"watch","level":"info"}
+{"message":"build/building-with-astro/index.html","label":"watch","level":"info"}
+{"message":"build/hello-world/index.html","label":"watch","level":"info"}
+{"message":"build/index.html","label":"watch","level":"info"}
+{"message":"build/music/index.html","label":"watch","level":"info"}
+{"message":"build/404.html","label":"watch","level":"info"}
+{"message":"build/about/index.html","label":"watch","level":"info"}
+{"message":"build/blog/index.html","label":"watch","level":"info"}
+{"message":"build/building-with-astro/index.html","label":"watch","level":"info"}
+{"message":"build/hello-world/index.html","label":"watch","level":"info"}
+{"message":"build/music/index.html","label":"watch","level":"info"}
+{"message":"build/index.html","label":"watch","level":"info"}
+{"message":"[200] / 28ms","label":null,"level":"info"}
+{"message":"[200] /blog 25ms","label":null,"level":"info"}
+{"message":"[200] /blog 6ms","label":null,"level":"info"}
+{"message":"[200] /music 26ms","label":null,"level":"info"}
+{"message":"[200] /music 8ms","label":null,"level":"info"}

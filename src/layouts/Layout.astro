@@ -369,6 +369,15 @@ const navItems = [
           var m = src.match(/[?&]id=(\d+)/);
           if (m) fetchLyrics(m[1], nameEl.textContent);
         });
+
+        // Restore lyrics card visibility after ClientRouter navigations
+        document.addEventListener('astro:after-swap', function() {
+          var body = document.getElementById('lyrics-body');
+          var card = document.getElementById('lyrics-card');
+          if (body && body.children.length > 0 && card) {
+            card.classList.add('visible');
+          }
+        });
       })();
     </script>
     <script>
